@@ -1,0 +1,88 @@
+#define BLYNK_TEMPLATE_ID "TMPL6lzVrCyZq"
+#define BLYNK_TEMPLATE_NAME "BLYNK UAP 2"
+#define BLYNK_AUTH_TOKEN "4t3C5bwPe_4_LTiipDqvMIuO1pWRxb3R"
+
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+#include <DHT.h>
+
+#define LED_PIN1 4
+#define LED_PIN2 16
+#define BUZZER_PIN 0
+#define DHT_PIN 2
+#define API_PIN 15
+#define DHTTYPE DHT22
+
+DHT dht(DHT_PIN, DHTTYPE);
+char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[] = "Wokwi-GUEST"; 
+char pass[] = "";
+
+void setup() {
+
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32!");
+
+  pinMode(LED_PIN1, OUTPUT);
+  pinMode(LED_PIN2, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(API_PIN, INPUT);
+
+  dht.begin();
+  Blynk.begin(auth, ssid, pass);
+}
+
+void loop() {
+
+  Blynk.run();
+
+  int flameValue = digitalRead(API_PIN);
+  float temperature = dht.readTemperature();
+
+  if (flameValue == LOW) {
+    digitalWrite(LED_PIN1, HIGH);
+    delay(100);
+    digitalWrite(LED_PIN2, HIGH);
+    delay(100);
+    tone(BUZZER_PIN, 1000);
+    Blynk.virtualWrite(V0, "🔥 Api Terdeteksi!");
+  } else {
+    digitalWrite(LED_PIN1, LOW);
+    digitalWrite(LED_PIN2, LOW);
+    noTone(BUZZER_PIN);
+    Blynk.virtualWrite(V0, "✅ Aman dari Api");
+  }
+
+  if (temperature > 79) {
+    digitalWrite(LED_PIN1, HIGH);
+    delay(100);
+    digitalWrite(LED_PIN2, HIGH);
+    delay(100);
+    tone(BUZZER_PIN, 1000);
+    Blynk.virtualWrite(V1, "💨 Suhu Sangat Panas Terdeteksi!");
+  } else {
+    digitalWrite(LED_PIN1, LOW);
+    digitalWrite(LED_PIN2, LOW);
+    noTone(BUZZER_PIN);
+    Blynk.virtualWrite(V1, "✅ Suhu Normal");
+  }
+
+  if (flameValue == LOW && temperature > 79) {
+    digitalWrite(LED_PIN1, HIGH);
+    delay(100);
+    digitalWrite(LED_PIN2, HIGH);
+    delay(100);
+    tone(BUZZER_PIN, 1000);
+    Blynk.virtualWrite(V1, "🔥 Indikasi Kebakaran Terdeteksi!");
+    Blynk.virtualWrite(V2, "🔥 Indikasi Kebakaran Terdeteksi!");
+    Blynk.virtualWrite(V3, "🔥 Indikasi Kebakaran Terdeteksi!");
+  } else {
+    digitalWrite(LED_PIN1, LOW);
+    digitalWrite(LED_PIN2, LOW);
+    noTone(BUZZER_PIN);
+    Blynk.virtualWrite(V3, "✅ Aman dari Indikasi Kebakaran");
+  }
+
+  delay(1000);
+}
