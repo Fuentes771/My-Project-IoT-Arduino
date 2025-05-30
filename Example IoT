@@ -1,0 +1,91 @@
+#define BLYNK_TEMPLATE_ID "TMPL6Dk3lCJgh"
+#define BLYNK_TEMPLATE_NAME "Bylnk UAP"
+#define BLYNK_AUTH_TOKEN "r4zXVd2qSlzt276eWJIAC5Ibojnt-KCL"
+
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+
+#define LAMPU_DEPAN 17
+#define LAMPU_KAMAR 16
+#define LAMPU_TENGAH 4
+#define TRIG_PIN 0
+#define ECHO_PIN 2
+#define BUZZER 22
+
+char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[] = "Wokwi-GUEST";
+char pass[] = "";
+
+BlynkTimer timer;
+
+long readDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  return duration * 0.034 / 2;
+}
+
+BLYNK_WRITE(V0){
+  int lampuHidup = param.asInt();
+  digitalWrite(LAMPU_DEPAN, lampuHidup);
+  digitalWrite(LAMPU_KAMAR, lampuHidup);
+  digitalWrite(LAMPU_TENGAH, lampuHidup);
+}
+
+BLYNK_WRITE(V1){
+  int pinValue = param.asInt();
+  digitalWrite(LAMPU_DEPAN, pinValue);
+}
+
+BLYNK_WRITE(V2){ 
+ int pinValue = param.asInt(); 
+ digitalWrite(LAMPU_KAMAR, pinValue); 
+} 
+
+BLYNK_WRITE(V3){ 
+ int pinValue = param.asInt(); 
+ digitalWrite(LAMPU_TENGAH, pinValue); 
+} 
+
+BLYNK_WRITE(V5){
+  int pinValue = param.asInt();
+  if(pinValue == 1){
+    tone(BUZZER, 1000);
+  } else {
+    noTone(BUZZER);
+  }
+}
+
+void cekJarak(){
+
+  long distance = readDistance();
+  Blynk.virtualWrite(V4, distance);
+
+  if (distance < 10) {
+    Blynk.logEvent("objek_mendekat", "Sebuah Objek Mendekat 10 CM!");
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32!");
+
+  Blynk.begin(auth,ssid,pass);
+  pinMode(LAMPU_DEPAN, OUTPUT);
+  pinMode(LAMPU_KAMAR, OUTPUT);
+  pinMode(LAMPU_TENGAH, OUTPUT);
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(BUZZER, OUTPUT);
+
+  timer.setInterval(1000L, cekJarak);
+}
+
+void loop() {
+ Blynk.run(); 
+ timer.run();
+}
